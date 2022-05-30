@@ -1,9 +1,11 @@
 import './App.css';
 import 'antd/dist/antd.min.css';
 import { useEffect, useState } from 'react';
-import { Table, Space, message, InputNumber, Row, Col, Upload, Modal, Button } from 'antd';
+import { Table, Space, message, InputNumber, Row, Col, Upload, Modal, Button, Form, Input } from 'antd';
 import axios from 'axios';
-import { EditOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, UploadOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+
+const apiUrl = 'https://nphc-hr.free.beeceptor.com';
 
 function UploadCSV({ refreshData }) {
   const uploadFile = async options => {
@@ -16,7 +18,7 @@ function UploadCSV({ refreshData }) {
     formData.append('file', file);
     axios
       .post(
-        'https://nphc-hr.free.beeceptor.com/employees/upload', // there's multiple different api in the doc & mock api site, use this for now
+        `${apiUrl}/employees/upload`, // there's multiple different api in the doc & mock api site, use this for now
         formData,
         config,
       )
@@ -69,10 +71,10 @@ function UploadCSV({ refreshData }) {
 
   return (
     <div>
-      <Button type="primary" onClick={showModal}>
+      <Button type='primary' onClick={showModal}>
         Click Here to Upload Data
       </Button>
-      <Modal title="Upload" visible={isModalVisible} onOk={handleOk} okText="Done" cancelButtonProps={{ style: { display: 'none' } }}>
+      <Modal title='Upload' visible={isModalVisible} onOk={handleOk} okText='Done' cancelButtonProps={{ style: { display: 'none' } }}>
         <Upload {...uploadProps}>
           <Button>
             <UploadOutlined />Click here to Upload CSV file
@@ -117,55 +119,184 @@ function SalaryFilter({ dataSource, onFilterChange }) {
 
   return (
     <Space>
-      <div>Salary Range</div>
+      <div>Salary Range:</div>
       <div>Min</div>
       <InputNumber min={defaultMinValue} max={defaultMaxValue} prefix='$' onChange={handleMinValueChange} />
+      <div>-</div>
       <div>Max</div>
       <InputNumber min={defaultMinValue} max={defaultMaxValue} prefix='$' onChange={handleMaxValueChange} />
     </Space>
   );
 }
 
+function ActionItems({ record, refreshData }) {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const submitEditApi = (editedRecord) => {
+    console.log('submit edit api');
+    axios
+      .put(
+        `${apiUrl}/employees/${record.id}`,
+        editedRecord
+      )
+      .then(response => {
+        message.success(`${editedRecord.full_name} edited successfully`);
+        setIsModalVisible(false);
+        refreshData();
+      })
+      .catch(err => {
+        console.log('Error: ', err);
+        message.error(`Error when editing ${editedRecord.full_name}`);
+      });
+  };
+
+  const handleEditStudent = () => {
+    form
+      .validateFields()
+      .then((values) => {
+        submitEditApi(values);
+        form.resetFields();
+      })
+      .catch((info) => {
+        console.log('Validate Failed:', info);
+      });
+  };
+
+  const handleDeleteStudent = () => {
+    Modal.confirm({
+      icon: <ExclamationCircleOutlined />,
+      title: 'Delete User',
+      content: `Are you sure you want to delete ${record.full_name}?`,
+      okType: 'danger',
+      onOk: () => {
+        axios
+          .delete(
+            `${apiUrl}/employees/${record.id}`,
+          )
+          .then(response => {
+            message.success(`${record.full_name} deleted successfully`);
+            refreshData();
+          })
+          .catch(err => {
+            console.log('Error: ', err);
+            message.error(`Error when deleting ${record.full_name}`);
+          });
+        refreshData();
+      }
+    });
+  };
+
+  return (
+    <Space>
+      <EditOutlined onClick={showModal}></EditOutlined>
+      <DeleteOutlined onClick={handleDeleteStudent}></DeleteOutlined>
+      <Modal
+        visible={isModalVisible}
+        icon='<EditOutlined />'
+        title='Edit User'
+        onOk={handleEditStudent}
+        okText='Submit'
+        onCancel={handleCancel}
+      >
+        <Space direction='vertical'>
+          <div> Employee ID {record.id}</div>
+          <Form
+            form={form}
+            layout="vertical"
+            name="form_in_modal"
+            initialValues={record}
+          >
+            <Form.Item
+              name="full_name"
+              label="Name"
+              rules={[
+                {
+                  required: true,
+                  message: 'Please insert name!',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name="login_id"
+              label="Login"
+              rules={[
+                {
+                  required: true,
+                  message: 'Please insert login!',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              name="salary"
+              label="Salary"
+              rules={[
+                {
+                  required: true,
+                  message: 'Please insert salary!',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+          </Form>
+        </Space>
+      </Modal>
+    </Space >
+  );
+}
+
 function App() {
   const paginationConfig = {
-    pageSizeOptions: ['5', '10', '15']
+    pageSizeOptions: ['5', '10', '15'],
+    hideOnSinglePage: false,
   };
-  const [dataSource, setdataSource] = useState(generateDataSource(100));
+  // const [dataSource, setdataSource] = useState(generateDataSource(100));
+  const [dataSource, setdataSource] = useState([]);
   const [filteredDataSource, setFilteredDataSource] = useState(dataSource);
-  // const [dataSource, setdataSource] = useState([]);
 
-  const url = 'https://nphc-hr.free.beeceptor.com/employees';
-  // temporary comment out for testing , free version of beeceptor have limit of 50 per day
-  // useEffect(() => {
-  //   refreshData()
-  //   // .finally(() => setLoaded(true));
-  // }, []);
+  useEffect(() => {
+    refreshData()
+  }, []);
 
   const refreshData = () => {
     console.log('data is refreshed');
-    // axios
-    //     .get(url)
-    //     .then((response) => {
-    //       console.log(response);
-    //       setdataSource(response.data)
-    //     }
-    //     )
-    //     .catch((error) => message.error('There is an error when getting employee data.', error.message));
+    axios
+      .get(`${apiUrl}/employees`)
+      .then((response) => {
+        console.log(response);
+        setdataSource(response.data);
+        setFilteredDataSource(response.data);
+      }
+      )
+      .catch((error) => message.error('There is an error when getting employee data.', error.message));
   }
 
-  function generateDataSource(value) {
-    let dataSourceArray = [];
-    for (let i = 1; i <= value; i++) {
-      dataSourceArray.push({
-        key: i,
-        id: i,
-        full_name: 'Harry Potter ' + i,
-        login_id: 'hpotter',
-        salary: (i + 1049).toString(),
-      });
-    };
-    return dataSourceArray;
-  }
+  // function generateDataSource(value) {
+  //   let dataSourceArray = [];
+  //   for (let i = 1; i <= value; i++) {
+  //     dataSourceArray.push({
+  //       key: i,
+  //       id: i,
+  //       full_name: 'Harry Potter ' + i,
+  //       login_id: 'hpotter',
+  //       salary: (i + 1049).toString(),
+  //     });
+  //   };
+  //   return dataSourceArray;
+  // }
 
   const columns = [
     {
@@ -196,17 +327,14 @@ function App() {
       title: 'Action',
       key: 'action',
       render: (record) => (
-        <Space>
-          <EditOutlined></EditOutlined>
-          <DeleteOutlined></DeleteOutlined>
-        </Space>
+        <ActionItems record={record} refreshData={refreshData}></ActionItems>
       ),
     },
   ];
 
   return (
-    <div className="App">
-      <Space size="middle" direction="vertical">
+    <div className='App'>
+      <Space size='middle' direction='vertical'>
         <UploadCSV refreshData={refreshData}></UploadCSV>
         <SalaryFilter
           dataSource={dataSource}
