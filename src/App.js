@@ -33,7 +33,7 @@ function UploadCSV({ refreshData }) {
   };
 
   const uploadProps = {
-    multiple: true,
+    multiple: true, // TODO: need to fix ; seems to be able to upload multiple but have problem updating the status correctly. 
     customRequest: uploadFile,
     beforeUpload: (file) => {
       const isCSV = file.type === 'text/csv';
@@ -43,7 +43,6 @@ function UploadCSV({ refreshData }) {
       }
 
       let isFileSizeExceeded = false;
-
       // reject if exceeded file limit of 2mb
       if (file.size > 20000000) {
         message.error(`${file.name} exceeded the file limit of 2mb`);
