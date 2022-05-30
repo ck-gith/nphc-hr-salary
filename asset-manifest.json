@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/nphc-hr-salary/static/css/main.556b9d8c.css",
+    "main.js": "/nphc-hr-salary/static/js/main.3d9ac5ef.js",
+    "static/js/787.737fd217.chunk.js": "/nphc-hr-salary/static/js/787.737fd217.chunk.js",
+    "index.html": "/nphc-hr-salary/index.html",
+    "main.556b9d8c.css.map": "/nphc-hr-salary/static/css/main.556b9d8c.css.map",
+    "main.3d9ac5ef.js.map": "/nphc-hr-salary/static/js/main.3d9ac5ef.js.map",
+    "787.737fd217.chunk.js.map": "/nphc-hr-salary/static/js/787.737fd217.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.556b9d8c.css",
+    "static/js/main.3d9ac5ef.js"
+  ]
+}
